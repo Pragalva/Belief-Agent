@@ -12,7 +12,8 @@ class Agent:
     
     #Function to remove from the Belief base
     def contract(self, belief):
-        self.beliefs.discard(belief)
+        remainders = find_remainders(self.beliefs, belief)
+        ...
 
     #Function to show current belief
     def show(self):
