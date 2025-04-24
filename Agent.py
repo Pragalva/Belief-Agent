@@ -1,5 +1,63 @@
 from Evaluator import*
 from Parser import*
+from CNF_converter import to_cnf
+from itertools import combinations
+
+
+def negate(literal: str) -> str:
+    return literal[1:] if literal.startswith('¬') else f"¬{literal}"
+
+
+def is_complementary(literal_1: str, literal_2: str):
+    return negate(literal_1) == literal_2
+
+
+def resolve(clause_i, clause_j):
+    resolvents = []
+    for literal_1 in clause_i:
+        for literal_2 in clause_j:
+            if is_complementary(literal_1.strip(), literal_2.strip()):
+                new_clause = list(set(clause_i + clause_j) - {literal_1, literal_2})
+                resolvents.append(new_clause)
+    return resolvents
+
+
+def resolution(clauses):
+    clauses = [frozenset(clause) for clause in clauses]
+    new = set()
+    while True:
+        pairs = combinations(clauses, 2)
+        for (clause_i, clause_j) in pairs:
+            for resolvent in resolve(list(clause_i), list(clause_j)):
+                resolution_set = frozenset(resolvent)
+                if not resolution_set:
+                    return True  # contradiction
+                new.add(resolution_set)
+        if new.issubset(set(clauses)):
+            return False
+        clauses.extend(list(new))
+
+
+def entails(base, phi):
+    base_clauses = []
+    for f in base:
+        base_clauses.extend(to_cnf(f))
+    phi_negated = to_cnf(negate(phi))
+    return resolution(base_clauses + phi_negated)
+
+
+def powerset(s):
+    return [set(c) for i in range(len(s)+1) for c in combinations(s, i)]
+
+
+def find_remainders(base, phi):
+    remainders = []
+    for subset in powerset(base):
+        if not entails(subset, phi):
+            if all(not (subset < other and not entails(other, phi)) for other in powerset(base)):
+                remainders.append(subset)
+    return remainders
+
 
 class Agent:
     def __init__(self):
