@@ -81,7 +81,7 @@ def find_assignments_that_make_true(expr):
     root = parse(tokens)
 
     # Extract variables from the expression
-    variables = set(re.findall(r'[A-Za-z]+', expr))  # Only variables are alphabetic strings
+    variables = set(re.findall(r'[A-Za-z][A-Za-z0-9]*', expr))  # Only variables are alphabetic strings
 
     # Generate all possible assignments for the variables
     all_assignments = list(itertools.product([True, False], repeat=len(variables)))
