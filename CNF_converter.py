@@ -76,3 +76,5 @@ def to_cnf(node):
     node = push_negations(node)
     node = distribute_or_over_and(node)
     return node
+
+#Set of cluases, 

@@ -38,10 +38,11 @@ def resolution(clauses):
         clauses.extend(list(new))
 
 
-def entails(base, phi):
+def entails(base, phi):   
     base_clauses = []
     for f in base:
-        base_clauses.extend(to_cnf(f))
+        f_tree = parse(tokenize(f))
+        base_clauses.extend(to_cnf(f_tree))
     phi_negated = to_cnf(negate(phi))
     return resolution(base_clauses + phi_negated)
 
@@ -99,3 +100,7 @@ class Agent:
         combined = ' ∧ '.join(expressions)
         # Wrap the whole expression in parentheses
         return f'({combined})'
+
+    #Function to create a tree out of the belief base
+    def parse_base(self):
+        return parse(self.combine_with_and())
