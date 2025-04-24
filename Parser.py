@@ -41,7 +41,7 @@ def print_tree(node, indent=0):
 #Output = ['P', '→', '(', 'Q', '∧', 'R', ')']
 def tokenize(expr):
     expr = expr.replace(" ", "")
-    pattern = r'¬|∧|∨|→|↔|\^|\(|\)|[A-Za-z]+'
+    pattern = r'¬|∧|∨|→|↔|\^|\(|\)|[A-Za-z][A-Za-z0-9]*'
     return re.findall(pattern, expr)
 
 #Parse - recursively creates a tree out of token and the precidence set

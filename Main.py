@@ -13,6 +13,10 @@ print("Belief Base:", expr)
 print(find_assignments_that_make_true(expr))
 print("Consistency:", is_consistent(find_assignments_that_make_true(expr)))
 
+t = tokenize('P1 ∨ B2')
+print(t)
+tree = parse(t)
+print_tree(tree)
 '''
 belief_agent.expand(expr)
 print(belief_agent.beliefs)
