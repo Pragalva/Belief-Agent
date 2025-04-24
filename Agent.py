@@ -43,7 +43,9 @@ def entails(base, phi):
     for f in base:
         f_tree = parse(tokenize(f))
         base_clauses.extend(to_cnf(f_tree))
-    phi_negated = to_cnf(negate(phi))
+    neg_phi= negate(phi)
+    phi_tree = parse(tokenize(neg_phi))
+    phi_negated = to_cnf(phi_tree)
     return resolution(base_clauses + phi_negated)
 
 
