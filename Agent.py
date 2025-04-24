@@ -8,7 +8,10 @@ class Agent:
     #Function to add to the belief base
     #Still need to check if it is logical add the belief
     def expand(self, belief):
-        self.beliefs.add(belief)
+        if len(find_assignments_that_make_true(belief)) != 0:
+            self.beliefs.add(belief)
+        else:
+            print('The belief you want to add is a contradiction')
     
     #Function to remove from the Belief base
     def contract(self, belief):
