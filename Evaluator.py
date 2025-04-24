@@ -95,3 +95,21 @@ def find_assignments_that_make_true(expr):
             valid_assignments.append(assignment)
     
     return valid_assignments
+
+def is_consistent(valid_assignments):
+    """Check if there is any assignment that makes the expression true."""
+    return len(valid_assignments) > 0
+
+def longest_remainder_by_length(remainders):
+    """Sort the remainders based on the number of beliefs."""
+    return max(remainders, key=len)
+
+def partial_meet (remainders):
+    """Give back the intersection of the remainders."""
+    if len(remainders) == 0:
+        return set()
+    
+    intersection = remainders[0]
+    for remainder in remainders[1:]:
+        intersection = intersection.intersection(remainder)
+    return intersection

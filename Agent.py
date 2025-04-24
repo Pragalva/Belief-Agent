@@ -8,7 +8,10 @@ class Agent:
     #Function to add to the belief base
     #Still need to check if it is logical add the belief
     def expand(self, belief):
-        self.beliefs.add(belief)
+        if len(find_assignments_that_make_true(belief)) != 0:
+            self.beliefs.add(belief)
+        else:
+            print('The belief you want to add is a contradiction')
     
     #Function to remove from the Belief base
     def contract(self, belief):
@@ -28,3 +31,13 @@ class Agent:
     #Make a dictionary with truth values
     def get_assignment(self):
         return {b: True for b in self.beliefs}
+
+    #Combine all the expression with a and in the belief set
+    def combine_with_and(self):
+        expressions = self.beliefs
+        if not expressions:
+            return ""        
+        # Join all expressions with '∧'
+        combined = ' ∧ '.join(expressions)
+        # Wrap the whole expression in parentheses
+        return f'({combined})'
