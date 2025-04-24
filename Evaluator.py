@@ -100,9 +100,24 @@ def is_consistent(valid_assignments):
     """Check if there is any assignment that makes the expression true."""
     return len(valid_assignments) > 0
 
-def longest_remainder_by_length(remainders):
-    """Sort the remainders based on the number of beliefs."""
-    return max(remainders, key=len)
+def longest_remainders_by_length(remainders):
+    """Return all remainder sets with the maximum number of beliefs."""
+    if not remainders:
+        return []
+
+    max_len = max(len(r) for r in remainders)
+    return [r for r in remainders if len(r) == max_len]
+
+def remainders_with_shortest_avg_clause_length(remainders):
+    """Return remainders with the shortest average clause length."""
+    if not remainders:
+        return []
+
+    def avg_clause_length(r):
+        return sum(len(clause) for clause in r) / len(r) if r else float('inf')
+
+    min_avg = min(avg_clause_length(r) for r in remainders)
+    return [r for r in remainders if avg_clause_length(r) == min_avg]
 
 def partial_meet (remainders):
     """Give back the intersection of the remainders."""
