@@ -27,3 +27,13 @@ class Agent:
     #Make a dictionary with truth values
     def get_assignment(self):
         return {b: True for b in self.beliefs}
+
+    #Combine all the expression with a and in the belief set
+    def combine_with_and(self):
+        expressions = self.beliefs
+        if not expressions:
+            return ""        
+        # Join all expressions with '∧'
+        combined = ' ∧ '.join(expressions)
+        # Wrap the whole expression in parentheses
+        return f'({combined})'
