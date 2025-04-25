@@ -6,9 +6,12 @@ from Agent import *
 from itertools import permutations
 from collections import defaultdict
 
-def generate_combinations(num_true):
+NUM_POS = 4
+COLORS = ['R', 'G', 'B', 'Y']  # Red, Green, Blue, Yellow
+
+def generate_combinations(num_true, NUM_POS=4):
     # Define the base combination: Two True values and Two False values
-    base_combination = [True] * num_true + [False] * (4 - num_true)
+    base_combination = [True] * num_true + [False] * (NUM_POS - num_true)
     
     # Use permutations to generate all possible unique combinations of this base combination
     # Since permutations can repeat, we use set() to avoid duplicates
@@ -17,83 +20,71 @@ def generate_combinations(num_true):
     return list(unique_combinations)
 
 def generate_code():
-    """Generate a random code of 4 colors from a set of 3 colors."""
-    colors = ['R', 'G', 'B']
-    return [random.choice(colors) for _ in range(4)]
+    """Generate a random code."""
+    return [random.choice(COLORS) for _ in range(NUM_POS)]
 
 def evaluate_guess(guess, code):
     """Evaluate the guess against the code."""    
-    correct_positions = sum(guess[i] == code[i] for i in range(4)) #green hint
+    correct_positions = sum(guess[i] == code[i] for i in range(NUM_POS)) #green hint
     correct_colors = sum(min(guess.count(c), code.count(c)) for c in set(guess)) - correct_positions #yellow hint
     return correct_positions, correct_colors
 
 def add_to_belief_base(guess, correct_positions, correct_colors, BeliefBase):
-    """Add the evaluation of the guess to the belief base."""
-    #gained info by green guesses
+    # Green hints (correct position)
     combination_g = generate_combinations(correct_positions)
 
-    belief_g = "("
+    belief_g_clauses = []
     for combi in combination_g:
-        # Create a belief string based on the guess and the evaluation
-        belief_g += "("
-        for i in range(4):
-            if combi[i]:
-                belief_g += f"{guess[i]}{i+1} ∧ "
-            else:
-                belief_g += f"¬{guess[i]}{i+1} ∧ "
-        belief_g = belief_g[:-3]  # Remove the last " ∧ "
-        belief_g += ") ∨ "
-    belief_g = belief_g[:-3]  # Remove the last " ∨ "
-    belief_g += ")"
+        clause_parts = []
+        for i in range(NUM_POS):
+            part = f"{guess[i]}{i+1}" if combi[i] else f"¬{guess[i]}{i+1}"
+            clause_parts.append(part)
+        belief_g_clauses.append(" ∧ ".join(clause_parts))
+
+    belief_g = "(" + " ∨ ".join(f"({clause})" for clause in belief_g_clauses) + ")"
     BeliefBase.expand(belief_g)
-    print("Green belief added:", belief_g)   
+    print("Green belief added:", belief_g)
 
-    #gained info by yellow guesses
-
-    from collections import defaultdict
-
+    # Yellow hints (correct color, wrong position)
     combination_y = generate_combinations(correct_colors)
 
-    # Step 1: Collect positions per color
     color_positions = defaultdict(list)
     for i, color in enumerate(guess):
-        color_positions[color].append(i + 1)  # Positions are 1-indexed
+        color_positions[color].append(i + 1)
 
-    # Step 2: Create base clauses
     unique_clauses = []
     for color, positions in color_positions.items():
-        # Other positions this color could be in
-        other_positions = [f"{color}{j}" for j in range(1, 5) if j not in positions]
+        other_positions = [f"{color}{j}" for j in range(1, NUM_POS + 1) if j not in positions]
         negated_guesses = [f"¬{color}{j}" for j in positions]
-
-        # If there are other places it could go, include them
         if other_positions:
             inner_clause = f"({' ∨ '.join(other_positions)}) ∧ {' ∧ '.join(negated_guesses)}"
         else:
             inner_clause = ' ∧ '.join(negated_guesses)
-
         unique_clauses.append(inner_clause)
 
-    # Step 3: Combine clauses per combination
-    belief_y = "("
+    seen_clauses = set()
+    belief_y_clauses = []
     for combi in combination_y:
-        belief_y += "("
+        clause_parts = []
         for include, clause in zip(combi, unique_clauses):
-            if include:
-                belief_y += f"({clause}) ∧ "
-            else:
-                belief_y += f"¬({clause}) ∧ "
-        belief_y = belief_y[:-3] + ") ∨ "  # Remove last ' ∧ ', close group
-    belief_y = belief_y[:-3] + ")"  # Remove last ' ∨ ', close group
+            part = f"({clause})" if include else f"¬({clause})"
+            clause_parts.append(part)
+        clause_str = " ∧ ".join(clause_parts)
+        if clause_str not in seen_clauses:
+            seen_clauses.add(clause_str)
+            belief_y_clauses.append(f"({clause_str})")
 
-    BeliefBase.expand(belief_y)
-    print("Yellow belief added:", belief_y)
+    if belief_y_clauses:
+        belief_y = "(" + " ∨ ".join(belief_y_clauses) + ")"
+        BeliefBase.expand(belief_y)
+        print("Yellow belief added:", belief_y)
             
 
 def next_guess(BeliefBase):
     """Generate the next guess based on the current beliefs."""
     CNF = BeliefBase.combine_with_and()
     possible_solutions = find_assignments_that_make_true(CNF)
+    print("Possible solutions:", len(possible_solutions))
     if len(possible_solutions) > 0:
         guess_values = [key for key,value in possible_solutions[0].items() if value == True]
         sorted_entries = sorted(guess_values, key=lambda x: int(x[1:])) #sort them by the second letter
@@ -118,30 +109,18 @@ def game():
     #initialize the belief base
 
     #there must be a color in each position
-    BeliefBase.expand("(R1 ∨ G1 ∨ B1)")
-    BeliefBase.expand("(R2 ∨ G2 ∨ B2)")
-    BeliefBase.expand("(R3 ∨ G3 ∨ B3)")
-    BeliefBase.expand("(R4 ∨ G4 ∨ B4)")
+    for pos in range(1, NUM_POS + 1):
+        clause = "(" + " ∨ ".join(f"{color}{pos}" for color in COLORS) + ")"
+        BeliefBase.expand(clause)
 
     # there can just be one color in each position
-    BeliefBase.expand("(¬R1 ∨ ¬G1)")
-    BeliefBase.expand("(¬G1 ∨ ¬B1)")
-    BeliefBase.expand("(¬R1 ∨ ¬B1)")
-
-    BeliefBase.expand("(¬R2 ∨ ¬G2)")
-    BeliefBase.expand("(¬G2 ∨ ¬B2)")
-    BeliefBase.expand("(¬R2 ∨ ¬B2)")
-
-    BeliefBase.expand("(¬R3 ∨ ¬G3)")
-    BeliefBase.expand("(¬G3 ∨ ¬B3)")
-    BeliefBase.expand("(¬R3 ∨ ¬B3)")
-
-    BeliefBase.expand("(¬R4 ∨ ¬G4)")
-    BeliefBase.expand("(¬G4 ∨ ¬B4)")
-    BeliefBase.expand("(¬R4 ∨ ¬B4)")
+    for pos in range(1, NUM_POS + 1):
+        for i in range(len(COLORS)):
+            for j in range(i + 1, len(COLORS)):
+                clause = f"(¬{COLORS[i]}{pos} ∨ ¬{COLORS[j]}{pos})"
+                BeliefBase.expand(clause)
 
     next_guess(BeliefBase)
-
 
     #random initial guess
     guess = generate_code()
@@ -152,11 +131,11 @@ def game():
 
     ### GAME LOOP ###
     i = 2
-    while (not correct_positions == 4)and(i < 10):
+    while (not correct_positions == NUM_POS)and(i < 10):
         print(f"\n{i}:")
         i += 1
         #show the current beliefs
-        BeliefBase.show()
+        #BeliefBase.show()
 
         #make a guess
         guess = next_guess(BeliefBase)
