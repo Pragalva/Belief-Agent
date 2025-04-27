@@ -29,23 +29,53 @@ def evaluate_guess(guess, code):
     correct_colors = sum(min(guess.count(c), code.count(c)) for c in set(guess)) - correct_positions #yellow hint
     return correct_positions, correct_colors
 
-def add_to_belief_base(guess, correct_positions, correct_colors, BeliefBase):
-    # Green hints (correct position)
+
+def build_xor_belief(clauses):
+    """
+    Build a logical formula where exactly one of the given clauses is true (XOR).
+    """
+    if len(clauses) == 1:
+        return clauses[0]  # Only one option
+
+    # Step 1: OR all clauses
+    or_part = "(" + " ∨ ".join(clauses) + ")"
+
+    # Step 2: NOT(AND) for every pair
+    not_and_parts = []
+    for i in range(len(clauses)):
+        for j in range(i + 1, len(clauses)):
+            not_and_parts.append(f"¬({clauses[i]} ∧ {clauses[j]})")
+
+    and_not_and_part = "(" + " ∧ ".join(not_and_parts) + ")"
+
+    # Step 3: Full XOR
+    return f"({or_part} ∧ {and_not_and_part})"
+
+
+def build_green_belief(guess, correct_positions, num_pos):
+    """
+    Build and expand the belief for Green hints (correct color, correct position).
+    """
     combination_g = generate_combinations(correct_positions)
 
     belief_g_clauses = []
     for combi in combination_g:
-        clause_parts = []
-        for i in range(NUM_POS):
+        parts = []
+        for i in range(num_pos):
             part = f"{guess[i]}{i+1}" if combi[i] else f"¬{guess[i]}{i+1}"
-            clause_parts.append(part)
-        belief_g_clauses.append(" ∧ ".join(clause_parts))
+            parts.append(part)
+        belief_g_clauses.append("(" + " ∧ ".join(parts) + ")")
 
-    belief_g = "(" + " ∨ ".join(f"({clause})" for clause in belief_g_clauses) + ")"
-    BeliefBase.expand(belief_g)
+    belief_g = build_xor_belief(belief_g_clauses)
+
     print("Green belief added:", belief_g)
+    return belief_g
 
-    # Yellow hints (correct color, wrong position)
+
+def build_yellow_belief(guess, correct_colors, num_pos):
+    """
+    Build and expand the belief for Yellow hints (correct color, wrong position).
+    """
     combination_y = generate_combinations(correct_colors)
 
     color_positions = defaultdict(list)
@@ -54,31 +84,43 @@ def add_to_belief_base(guess, correct_positions, correct_colors, BeliefBase):
 
     unique_clauses = []
     for color, positions in color_positions.items():
-        other_positions = [f"{color}{j}" for j in range(1, NUM_POS + 1) if j not in positions]
+        other_positions = [f"{color}{j}" for j in range(1, num_pos + 1) if j not in positions]
         negated_guesses = [f"¬{color}{j}" for j in positions]
+
         if other_positions:
             inner_clause = f"({' ∨ '.join(other_positions)}) ∧ {' ∧ '.join(negated_guesses)}"
         else:
             inner_clause = ' ∧ '.join(negated_guesses)
-        unique_clauses.append(inner_clause)
+        
+        unique_clauses.append(f"({inner_clause})")
 
     seen_clauses = set()
     belief_y_clauses = []
     for combi in combination_y:
-        clause_parts = []
+        parts = []
         for include, clause in zip(combi, unique_clauses):
-            part = f"({clause})" if include else f"¬({clause})"
-            clause_parts.append(part)
-        clause_str = " ∧ ".join(clause_parts)
+            part = clause if include else f"¬{clause}"
+            parts.append(part)
+        clause_str = " ∧ ".join(parts)
         if clause_str not in seen_clauses:
             seen_clauses.add(clause_str)
             belief_y_clauses.append(f"({clause_str})")
 
-    if belief_y_clauses:
-        belief_y = "(" + " ∨ ".join(belief_y_clauses) + ")"
-        BeliefBase.expand(belief_y)
-        print("Yellow belief added:", belief_y)
-            
+    belief_y = build_xor_belief(belief_y_clauses)
+
+    print("Yellow belief added:", belief_y)
+    return belief_y
+    
+
+def add_to_belief_base(guess, correct_positions, correct_colors, BeliefBase):
+    """Add the guess and its evaluation to the belief base."""
+    # Build beliefs for green and yellow hints
+    belief_g = build_green_belief(guess, correct_positions, NUM_POS)
+    belief_y = build_yellow_belief(guess, correct_colors, NUM_POS)
+    
+    BeliefBase.expand(belief_g)
+    BeliefBase.expand(belief_y)
+
 
 def next_guess(BeliefBase):
     """Generate the next guess based on the current beliefs."""
