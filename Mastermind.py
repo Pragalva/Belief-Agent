@@ -3,11 +3,12 @@
 
 import random
 from Agent import *
+from Parser import *
 from itertools import permutations
 from collections import defaultdict
 
 NUM_POS = 4
-COLORS = ['R', 'G', 'B', 'Y']  # Red, Green, Blue, Yellow
+COLORS = ['R', 'G', 'B', 'Y', 'O', 'P']  # Red, Green, Blue, Yellow, Orange, Purple
 
 def generate_combinations(num_true, NUM_POS=4):
     # Define the base combination: Two True values and Two False values
@@ -121,11 +122,38 @@ def add_to_belief_base(guess, correct_positions, correct_colors, BeliefBase):
     BeliefBase.expand(belief_g)
     BeliefBase.expand(belief_y)
 
+def find_assignments_that_make_true_mastermind(expr, COLORS, NUM_POS):
+    # Tokenize and parse the expression
+    tokens = tokenize(expr)
+    root = parse(tokens)
+
+    # Extract variables from the expression
+    variables = set(re.findall(r'[A-Za-z][A-Za-z0-9]*', expr))
+
+    # Build all VALID assignments (only one color per position)
+    color_options = list(itertools.product(COLORS, repeat=NUM_POS))
+    
+    valid_assignments = []
+    for color_assignment in color_options:
+        assignment = {}
+        # For each position
+        for pos, color_at_pos in enumerate(color_assignment, start=1):
+            for color in COLORS:
+                var = f"{color}{pos}"
+                assignment[var] = (color == color_at_pos)  # Only one color True, others False
+        
+        # Evaluate expression
+        result = evaluate_tree(root, assignment)
+        if result:
+            valid_assignments.append(assignment)
+
+    return valid_assignments
+
 
 def next_guess(BeliefBase):
     """Generate the next guess based on the current beliefs."""
     CNF = BeliefBase.combine_with_and()
-    possible_solutions = find_assignments_that_make_true(CNF)
+    possible_solutions = find_assignments_that_make_true_mastermind(CNF, COLORS, NUM_POS)
     print("Possible solutions:", len(possible_solutions))
     if len(possible_solutions) > 0:
         guess_values = [key for key,value in possible_solutions[0].items() if value == True]
