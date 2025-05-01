@@ -77,4 +77,11 @@ def to_cnf(node):
     node = distribute_or_over_and(node)
     return node
 
+def to_cnf_str(expr_str):
+    """Convert a formula string to CNF string."""
+    tokens = tokenize(expr_str)
+    tree = parse(tokens)
+    cnf_tree = to_cnf(tree)
+    return str(cnf_tree)
+
 #Set of cluases, 

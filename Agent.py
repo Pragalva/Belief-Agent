@@ -1,9 +1,9 @@
 from Evaluator import*
 from Parser import*
-from CNF_converter import to_cnf
+from CNF_converter import *
 from itertools import combinations
 
-
+'''
 def negate(literal: str) -> str:
     return literal[1:] if literal.startswith('¬') else f"¬{literal}"
 
@@ -60,7 +60,7 @@ def find_remainders(base, phi):
             if all(not (subset < other and not entails(other, phi)) for other in powerset(base)):
                 remainders.append(subset)
     return remainders
-
+'''
 
 class Agent:
     def __init__(self):
@@ -75,9 +75,9 @@ class Agent:
             print('The belief you want to add is a contradiction')
     
     #Function to remove from the Belief base
-    def contract(self, belief):
-        remainders = find_remainders(self.beliefs, belief)
-        ...
+    #def contract(self, belief):
+    #    remainders = find_remainders(self.beliefs, belief)
+    #    ...
 
     #Function to show current belief
     def show(self):
@@ -101,8 +101,37 @@ class Agent:
         # Join all expressions with '∧'
         combined = ' ∧ '.join(expressions)
         # Wrap the whole expression in parentheses
+        #print(combined)
         return f'({combined})'
+    
+    
 
     #Function to create a tree out of the belief base
     def parse_base(self):
         return parse(self.combine_with_and())
+    
+    def entail(self, phi):
+        not_phi = f"¬({phi})"
+
+        # Make a shallow copy to avoid modifying self
+        temp_agent = Agent()
+        temp_agent.beliefs = self.beliefs.copy()
+
+        # Tokenize and parse ¬φ, then convert to string and add
+        tokens = tokenize(not_phi)
+        not_phi_tree = parse(tokens)
+        not_phi_str = str(not_phi_tree)  # Store as string in the belief base
+        temp_agent.expand(not_phi_str)
+
+        # Parse base from tokenized belief string
+        tokens = tokenize(temp_agent.combine_with_and())
+        #print(tokens)
+        temp_base = parse(tokens)
+        #CNF = to_cnf_str(temp_agent.combine_with_and())
+
+        #print(find_assignments_that_make_true(temp_agent.combine_with_and()))
+        # Check consistency of the temporary belief base
+        if len(find_assignments_that_make_true(temp_agent.combine_with_and())) == 0:
+            return True  # ¬φ leads to contradiction ⇒ φ is entailed
+        else:
+            return False
