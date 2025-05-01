@@ -12,6 +12,7 @@ expr4 = "B"
 expr5 = "C"
 expr6 = "D"
 expr7 = "(A → C)"
+expr8 ="¬C"
 BeliefBase.expand(expr)
 BeliefBase.expand(expr2)
 BeliefBase.expand(expr3)
@@ -23,9 +24,10 @@ BeliefBase.show()
 #print(BeliefBase.entail(expr5))
 #print(BeliefBase.entail(expr7))
 #print(BeliefBase.entail(expr6))
-print(BeliefBase.find_remainders(expr5))
+#print(BeliefBase.find_remainders(expr5))
 #print(max(BeliefBase.find_remainders(expr7)))
-BeliefBase.Maximal_meet_contraction(expr5)
+BeliefBase.Maximal_meet_contraction(expr6)
+#BeliefBase.Revison_with_Maximal(expr8)
 
 BeliefBase.show()
 '''

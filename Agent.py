@@ -155,7 +155,7 @@ class Agent:
         #print(remainders)
         return remainders'''
 
-    def find_remainders(self, phi):
+    '''def find_remainders(self, phi):
         remainders = []
         base = self.beliefs
 
@@ -187,9 +187,26 @@ class Agent:
                     print(f"Adding {subset} to remainders.")  # Debug print
                     remainders.append(subset)
 
+        return remainders'''
+    def find_remainders(self, phi):
+        remainders = set()
+        base = self.beliefs
+
+        for subset in get_all_subsets(base):
+            temp_agent = Agent()
+            temp_agent.beliefs = subset
+
+            if not temp_agent.entail(phi):
+                remainders.add(frozenset(subset))  # frozenset makes it hashable
+
         return remainders
 
     def Maximal_meet_contraction(self,phi):
             remainders = self.find_remainders(phi)
             max_remainder = max(remainders)
-            self.beliefs = max_remainder
+            self.beliefs = set(max_remainder)
+
+    def Revison_with_Maximal(self,phi):
+            not_phi = f"¬({phi})"
+            self.Maximal_meet_contraction(not_phi)
+            self.expand(phi)
