@@ -1,7 +1,7 @@
 from Evaluator import*
 from Parser import*
 from CNF_converter import *
-from itertools import combinations
+from itertools import chain,combinations
 
 '''
 def negate(literal: str) -> str:
@@ -47,20 +47,27 @@ def entails(base, phi):
     phi_tree = parse(tokenize(neg_phi))
     phi_negated = to_cnf(phi_tree)
     return resolution(base_clauses + phi_negated)
-
-
-def powerset(s):
-    return [set(c) for i in range(len(s)+1) for c in combinations(s, i)]
-
-
-def find_remainders(base, phi):
-    remainders = []
-    for subset in powerset(base):
-        if not entails(subset, phi):
-            if all(not (subset < other and not entails(other, phi)) for other in powerset(base)):
-                remainders.append(subset)
-    return remainders
 '''
+
+def powerset(iterable):
+    s = list(iterable)
+    print(s)
+    return list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
+
+def get_all_subsets(input_set):
+    """
+    Returns all possible subsets of the input set as a list of sets.
+        
+    Parameters:
+    input_set (set): A set of strings.
+
+    Returns:
+    List[set]: A list containing all subsets of the input set.
+    """
+    s = list(input_set)
+    subsets = list(chain.from_iterable(combinations(s, r) for r in range(len(s)+1)))
+    return [set(subset) for subset in subsets]
+    
 
 class Agent:
     def __init__(self):
@@ -135,3 +142,54 @@ class Agent:
             return True  # ¬φ leads to contradiction ⇒ φ is entailed
         else:
             return False
+        
+    '''def find_remainders(self, phi):
+        remainders = []
+        base = self.beliefs
+        for subset in powerset(base):
+            temp_agent = Agent()
+            temp_agent.beliefs = subset
+            if not temp_agent.entail(phi):
+                if all(not (subset < other and not temp_agent.entail(phi)) for other in powerset(base)):
+                    remainders.append(subset)
+        #print(remainders)
+        return remainders'''
+
+    def find_remainders(self, phi):
+        remainders = []
+        base = self.beliefs
+
+        # Generate all subsets of the belief base
+        all_subsets = get_all_subsets(base)
+
+        # Loop through all subsets
+        for subset in all_subsets:
+            temp_agent = Agent()
+            temp_agent.beliefs = subset
+
+            # Check if this subset entails phi
+            if not temp_agent.entail(phi):
+                print(f"Subset {subset} does not entail phi.")  # Debug print
+
+                # Check if this subset is minimal
+                is_minimal = True
+                for other_subset in all_subsets:
+                    # Proper subset check, but exclude empty set comparison
+                    if other_subset < subset and other_subset != set():  
+                        other_agent = Agent()
+                        other_agent.beliefs = other_subset
+                        if not other_agent.entail(phi):
+                            is_minimal = False
+                            print(f"Subset {subset} is not minimal because of {other_subset}.")  # Debug print
+                            #break
+
+                if is_minimal:
+                    print(f"Adding {subset} to remainders.")  # Debug print
+                    remainders.append(subset)
+
+        return remainders
+
+    def Maximal_meet_contraction(self,phi):
+            remainders = self.find_remainders(phi)
+            max_remainder = max(remainders)
+            self.beliefs = max_remainder

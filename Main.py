@@ -15,13 +15,19 @@ expr7 = "(A → C)"
 BeliefBase.expand(expr)
 BeliefBase.expand(expr2)
 BeliefBase.expand(expr3)
+#BeliefBase.expand(expr3)
 
 BeliefBase.show()
 
-print(BeliefBase.entail(expr3))
-print(BeliefBase.entail(expr5))
-print(BeliefBase.entail(expr7))
-print(BeliefBase.entail(expr6))
+#print(BeliefBase.entail(expr3))
+#print(BeliefBase.entail(expr5))
+#print(BeliefBase.entail(expr7))
+#print(BeliefBase.entail(expr6))
+print(BeliefBase.find_remainders(expr5))
+#print(max(BeliefBase.find_remainders(expr7)))
+BeliefBase.Maximal_meet_contraction(expr5)
+
+BeliefBase.show()
 '''
 belief_agent.expand(expr)
 print(belief_agent.beliefs)
