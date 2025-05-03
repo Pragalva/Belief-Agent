@@ -3,52 +3,6 @@ from Parser import*
 from CNF_converter import *
 from itertools import chain,combinations
 
-'''
-def negate(literal: str) -> str:
-    return literal[1:] if literal.startswith('¬') else f"¬{literal}"
-
-
-def is_complementary(literal_1: str, literal_2: str):
-    return negate(literal_1) == literal_2
-
-
-def resolve(clause_i, clause_j):
-    resolvents = []
-    for literal_1 in clause_i:
-        for literal_2 in clause_j:
-            if is_complementary(literal_1.strip(), literal_2.strip()):
-                new_clause = list(set(clause_i + clause_j) - {literal_1, literal_2})
-                resolvents.append(new_clause)
-    return resolvents
-
-
-def resolution(clauses):
-    clauses = [frozenset(clause) for clause in clauses]
-    new = set()
-    while True:
-        pairs = combinations(clauses, 2)
-        for (clause_i, clause_j) in pairs:
-            for resolvent in resolve(list(clause_i), list(clause_j)):
-                resolution_set = frozenset(resolvent)
-                if not resolution_set:
-                    return True  # contradiction
-                new.add(resolution_set)
-        if new.issubset(set(clauses)):
-            return False
-        clauses.extend(list(new))
-
-
-def entails(base, phi):   
-    base_clauses = []
-    for f in base:
-        f_tree = parse(tokenize(f))
-        base_clauses.extend(to_cnf(f_tree))
-    neg_phi= negate(phi)
-    phi_tree = parse(tokenize(neg_phi))
-    phi_negated = to_cnf(phi_tree)
-    return resolution(base_clauses + phi_negated)
-'''
-
 def powerset(iterable):
     s = list(iterable)
     print(s)
@@ -142,52 +96,7 @@ class Agent:
             return True  # ¬φ leads to contradiction ⇒ φ is entailed
         else:
             return False
-        
-    '''def find_remainders(self, phi):
-        remainders = []
-        base = self.beliefs
-        for subset in powerset(base):
-            temp_agent = Agent()
-            temp_agent.beliefs = subset
-            if not temp_agent.entail(phi):
-                if all(not (subset < other and not temp_agent.entail(phi)) for other in powerset(base)):
-                    remainders.append(subset)
-        #print(remainders)
-        return remainders'''
 
-    '''def find_remainders(self, phi):
-        remainders = []
-        base = self.beliefs
-
-        # Generate all subsets of the belief base
-        all_subsets = get_all_subsets(base)
-
-        # Loop through all subsets
-        for subset in all_subsets:
-            temp_agent = Agent()
-            temp_agent.beliefs = subset
-
-            # Check if this subset entails phi
-            if not temp_agent.entail(phi):
-                print(f"Subset {subset} does not entail phi.")  # Debug print
-
-                # Check if this subset is minimal
-                is_minimal = True
-                for other_subset in all_subsets:
-                    # Proper subset check, but exclude empty set comparison
-                    if other_subset < subset and other_subset != set():  
-                        other_agent = Agent()
-                        other_agent.beliefs = other_subset
-                        if not other_agent.entail(phi):
-                            is_minimal = False
-                            print(f"Subset {subset} is not minimal because of {other_subset}.")  # Debug print
-                            #break
-
-                if is_minimal:
-                    print(f"Adding {subset} to remainders.")  # Debug print
-                    remainders.append(subset)
-
-        return remainders'''
     def find_remainders(self, phi):
         remainders = set()
         base = self.beliefs
@@ -207,6 +116,19 @@ class Agent:
             self.beliefs = set(max_remainder)
 
     def Revison_with_Maximal(self,phi):
-            not_phi = f"¬({phi})"
-            self.Maximal_meet_contraction(not_phi)
-            self.expand(phi)
+        not_phi = f"¬({phi})"
+        self.Maximal_meet_contraction(not_phi)
+        self.expand(phi)
+
+    def partial_meet_contraction(self,phi):
+        remainders = self.find_remainders(phi)
+        max_len = max(len(fs) for fs in remainders)
+        
+        longest_remainders = [set(fs) for fs in remainders if len(fs) == max_len]
+        intersection = set.intersection(*longest_remainders)
+        self.beliefs = intersection
+
+    def Revison_with_partial(self,phi):
+        not_phi = f"¬({phi})"
+        self.partial_meet_contraction(not_phi)
+        self.expand(phi)

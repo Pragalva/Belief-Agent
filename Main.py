@@ -26,8 +26,10 @@ BeliefBase.show()
 #print(BeliefBase.entail(expr6))
 #print(BeliefBase.find_remainders(expr5))
 #print(max(BeliefBase.find_remainders(expr7)))
-BeliefBase.Maximal_meet_contraction(expr6)
+#BeliefBase.Maximal_meet_contraction(expr6)
 #BeliefBase.Revison_with_Maximal(expr8)
+BeliefBase.partial_meet_contraction(expr5)
+
 
 BeliefBase.show()
 '''
